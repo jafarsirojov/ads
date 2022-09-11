@@ -92,9 +92,9 @@ func (h *handler) Add(w http.ResponseWriter, r *http.Request) {
 func (h *handler) GetList(w http.ResponseWriter, r *http.Request) {
 
 	var (
-		offsetStr    = r.Header.Get("offset")
-		priceSorting = r.Header.Get("priceSorting")
-		dateSorting  = r.Header.Get("dateSorting")
+		offsetStr   = r.Header.Get("offset")
+		sortByPrice = r.Header.Get("sortByPrice")
+		sortByDate  = r.Header.Get("sortByDate")
 
 		response contract.Response
 		offset   int
@@ -107,7 +107,7 @@ func (h *handler) GetList(w http.ResponseWriter, r *http.Request) {
 		offset = 0
 	}
 
-	list, err := h.AdsService.GetList(r.Context(), offset, priceSorting, dateSorting)
+	list, err := h.AdsService.GetList(r.Context(), offset, sortByPrice, sortByDate)
 	if err != nil {
 		if err == contract.ErrNotFound {
 			response = responses.NotFound

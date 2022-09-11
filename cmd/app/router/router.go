@@ -24,9 +24,12 @@ type Params struct {
 func NewRouter(params Params) {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/ad", params.Handler.Add).Methods("POST")
-	router.HandleFunc("/ads", params.Handler.GetList).Methods("GET")
-	router.HandleFunc("/ad/{id}", params.Handler.GetByID).Methods("GET")
+	version := params.Config.Version
+	baseUrl := "/api/shop/" + version
+
+	router.HandleFunc(baseUrl+"/ad", params.Handler.Add).Methods("POST")
+	router.HandleFunc(baseUrl+"/ads", params.Handler.GetList).Methods("GET")
+	router.HandleFunc(baseUrl+"/ad/{id}", params.Handler.GetByID).Methods("GET")
 
 	server := http.Server{
 		Addr:    params.Config.Port,

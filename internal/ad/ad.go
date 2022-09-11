@@ -31,7 +31,7 @@ func New(params Params) AdsService {
 
 type AdsService interface {
 	Add(ctx context.Context, ad contract.Ad) (contract.Ad, error)
-	GetList(ctx context.Context, offset int, priceSort, dateSort string) (ads []contract.AdFromList, err error)
+	GetList(ctx context.Context, offset int, sortByPrice, sortByDate string) (ads []contract.AdFromList, err error)
 	GetByID(ctx context.Context, id int) (contract.Ad, error)
 }
 
@@ -45,20 +45,20 @@ func (s *service) Add(ctx context.Context, ad contract.Ad) (contract.Ad, error) 
 	return ad, nil
 }
 
-func (s *service) GetList(ctx context.Context, offset int, priceSorting,
-	dateSorting string) (ads []contract.AdFromList, err error) {
+func (s *service) GetList(ctx context.Context, offset int, sortByPrice,
+	sortByDate string) (ads []contract.AdFromList, err error) {
 
 	var (
 		priceSort string
 		dateSort  string
 	)
 
-	if utils.InArray(priceSorting, sortType) {
-		priceSort = priceSorting
+	if utils.InArray(sortByPrice, sortType) {
+		priceSort = sortByPrice
 	}
 
-	if utils.InArray(dateSorting, sortType) {
-		dateSort = dateSorting
+	if utils.InArray(sortByDate, sortType) {
+		dateSort = sortByDate
 	}
 
 	ads, err = s.adRepo.GetList(ctx, offset, priceSort, dateSort)

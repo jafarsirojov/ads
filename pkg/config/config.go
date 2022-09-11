@@ -9,7 +9,8 @@ import (
 )
 
 type Config struct {
-	Port string
+	Port    string
+	Version string
 
 	DBUser     string
 	DBPassword string
@@ -35,7 +36,8 @@ func ProvideConfig() *Config {
 		DBPort:     getEnv("DATABASE_PORT", "5432"),
 		DBName:     getEnv("DATABASE_NAME", "adsdb"),
 
-		Port: getEnv("PORT", ":1111"),
+		Port:    getEnv("PORT", ":1111"),
+		Version: getEnv("VERSION", "v1"),
 	}
 }
 
