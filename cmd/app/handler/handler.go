@@ -5,7 +5,6 @@ import (
 	"ads/internal/contract"
 	"ads/internal/responses"
 	"ads/pkg/reply"
-	"ads/pkg/utils"
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"go.uber.org/fx"
@@ -40,8 +39,6 @@ func New(params Params) Handler {
 	}
 }
 
-var sortType = []string{"ascending", "descending"}
-
 func (h *handler) Add(w http.ResponseWriter, r *http.Request) {
 
 	var (
@@ -73,8 +70,8 @@ func (h *handler) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(request.LinksToPhotos) > 3 {
-		h.logger.Error("cmd.app.handler.Add request LinksToPhotos > 3",
+	if len(request.LinksToPhotos) > 3 || len(request.LinksToPhotos) == 0 {
+		h.logger.Error("cmd.app.handler.Add request LinksToPhotos incorrect",
 			zap.Any("request", request), zap.Int("count", len(request.LinksToPhotos)), zap.Error(err))
 		response = responses.BadRequest
 		return
@@ -95,17 +92,12 @@ func (h *handler) Add(w http.ResponseWriter, r *http.Request) {
 func (h *handler) GetList(w http.ResponseWriter, r *http.Request) {
 
 	var (
-		offsetStr    = mux.Vars(r)["offset"]
-		limitStr     = mux.Vars(r)["limit"]
-		priceSorting = mux.Vars(r)["priceSorting"]
-		dateSorting  = mux.Vars(r)["dateSorting"]
-
-		offset    int
-		limit     int
-		priceSort string
-		dateSort  string
+		offsetStr    = r.Header.Get("offset")
+		priceSorting = r.Header.Get("priceSorting")
+		dateSorting  = r.Header.Get("dateSorting")
 
 		response contract.Response
+		offset   int
 		err      error
 	)
 
@@ -115,22 +107,7 @@ func (h *handler) GetList(w http.ResponseWriter, r *http.Request) {
 		offset = 0
 	}
 
-	if limit, err = strconv.Atoi(limitStr); err != nil || limit <= 0 {
-		limit = 10
-	}
-
-	if utils.InArray(priceSorting, sortType) {
-		priceSort = priceSorting
-	}
-
-	if utils.InArray(dateSorting, sortType) {
-		dateSort = dateSorting
-	}
-
-	_ = priceSort //todo
-	_ = dateSort
-
-	list, err := h.AdsService.GetList(r.Context())
+	list, err := h.AdsService.GetList(r.Context(), offset, priceSorting, dateSorting)
 	if err != nil {
 		if err == contract.ErrNotFound {
 			response = responses.NotFound

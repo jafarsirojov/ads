@@ -6,6 +6,7 @@ import (
 	"ads/pkg/config"
 	"ads/pkg/db"
 	"context"
+	"fmt"
 	"github.com/jackc/pgx/v4"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -41,24 +42,28 @@ func (r *repo) Add(ctx context.Context, ad contract.Ad) (contract.Ad, error) {
 		`INSERT INTO ad(
 				title, 
 				description, 
-				price
+				price, 
+				links_to_photos
 			) VALUES(
-				$1, $2, $3
+				$1, $2, $3, $4
 			) RETURNING
 				id, 
 				title, 
 				description, 
 				price, 
+				links_to_photos,
 				created_at
 				;`,
 		ad.Title,
 		ad.Description,
 		ad.Price,
+		ad.LinksToPhotos,
 	).Scan(
 		&ad.ID,
 		&ad.Title,
 		&ad.Description,
 		&ad.Price,
+		&ad.LinksToPhotos,
 		&ad.CreatedAt,
 	)
 
@@ -71,16 +76,34 @@ func (r *repo) Add(ctx context.Context, ad contract.Ad) (contract.Ad, error) {
 	return ad, nil
 }
 
-func (r *repo) GetList(ctx context.Context) (ads []contract.Ad, err error) {
+func (r *repo) GetList(ctx context.Context, offset int, priceSort,
+	dateSort string) (ads []contract.AdFromList, err error) {
+
+	order := ""
+	if priceSort != "" || dateSort != "" {
+		order = " ORDER BY "
+		if priceSort != "" {
+			order = order + " price " + priceSort
+		}
+		if priceSort != "" && dateSort != "" {
+			order = order + ", "
+		}
+		if dateSort != "" {
+			order = order + " created_at " + dateSort
+		}
+	}
+
 	rows, err := r.db.Query(ctx,
-		`SELECT 
+		fmt.Sprintf(`SELECT 
 			id, 
 			title, 
-			description, 
 			price, 
+			links_to_photos,
 			created_at
 		FROM ad
-		WHERE 1=1 `)
+		WHERE 1=1 %s offset $1`, order),
+		offset,
+	)
 	if err != nil {
 		r.logger.Error("pkg.repository.Add r.db.Query", zap.Error(err))
 		return nil, err
@@ -88,17 +111,22 @@ func (r *repo) GetList(ctx context.Context) (ads []contract.Ad, err error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var ad contract.Ad
+		var ad contract.AdFromList
+		var links []string
 		err = rows.Scan(
 			&ad.ID,
 			&ad.Title,
-			&ad.Description,
 			&ad.Price,
+			&links,
 			&ad.CreatedAt,
 		)
 		if err != nil {
 			r.logger.Error("pkg.repository.Add rows.Scan", zap.Error(err))
 			return nil, err
+		}
+
+		if len(links) > 0 {
+			ad.LinkToPhoto = links[0]
 		}
 
 		ads = append(ads, ad)
@@ -117,7 +145,8 @@ func (r *repo) GetByID(ctx context.Context, id int) (ad contract.Ad, err error) 
 			id, 
 			title, 
 			description, 
-			price, 
+			price,
+			links_to_photos,
 			created_at
 		FROM ad
 		WHERE id = $1`,
@@ -127,6 +156,7 @@ func (r *repo) GetByID(ctx context.Context, id int) (ad contract.Ad, err error) 
 			&ad.Title,
 			&ad.Description,
 			&ad.Price,
+			&ad.LinksToPhotos,
 			&ad.CreatedAt,
 		)
 

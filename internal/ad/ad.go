@@ -3,6 +3,7 @@ package ad
 import (
 	"ads/internal/contract"
 	"ads/internal/interfaces"
+	"ads/pkg/utils"
 	"context"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -30,7 +31,7 @@ func New(params Params) AdsService {
 
 type AdsService interface {
 	Add(ctx context.Context, ad contract.Ad) (contract.Ad, error)
-	GetList(ctx context.Context) (ads []contract.Ad, err error)
+	GetList(ctx context.Context, offset int, priceSort, dateSort string) (ads []contract.AdFromList, err error)
 	GetByID(ctx context.Context, id int) (contract.Ad, error)
 }
 
@@ -44,8 +45,23 @@ func (s *service) Add(ctx context.Context, ad contract.Ad) (contract.Ad, error) 
 	return ad, nil
 }
 
-func (s *service) GetList(ctx context.Context) (ads []contract.Ad, err error) {
-	ads, err = s.adRepo.GetList(ctx)
+func (s *service) GetList(ctx context.Context, offset int, priceSorting,
+	dateSorting string) (ads []contract.AdFromList, err error) {
+
+	var (
+		priceSort string
+		dateSort  string
+	)
+
+	if utils.InArray(priceSorting, sortType) {
+		priceSort = priceSorting
+	}
+
+	if utils.InArray(dateSorting, sortType) {
+		dateSort = dateSorting
+	}
+
+	ads, err = s.adRepo.GetList(ctx, offset, priceSort, dateSort)
 	if err != nil {
 		s.logger.Error("internal.ad.GetList s.adRepo.GetList", zap.Error(err))
 		return nil, err
@@ -63,3 +79,5 @@ func (s *service) GetByID(ctx context.Context, id int) (ad contract.Ad, err erro
 
 	return ad, nil
 }
+
+var sortType = []string{"asc", "desc"}
