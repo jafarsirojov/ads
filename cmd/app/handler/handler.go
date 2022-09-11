@@ -143,6 +143,10 @@ func (h *handler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	payload, err := h.AdsService.GetByID(r.Context(), id)
 	if err != nil {
+		if err == contract.ErrNotFound {
+			response = responses.NotFound
+			return
+		}
 		h.logger.Error("cmd.app.handler.GetByID h.AdsService.GetByID",
 			zap.Int("id", id), zap.Error(err))
 		response = responses.BadRequest
