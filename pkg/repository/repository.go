@@ -37,7 +37,6 @@ func NewRepo(params Params) interfaces.AdRepo {
 
 func (r *repo) Add(ctx context.Context, ad contract.Ad) (contract.Ad, error) {
 
-	//txx, err := r.db.Begin(ctx)
 	err := r.db.QueryRow(ctx,
 		`INSERT INTO ad(
 				title, 
