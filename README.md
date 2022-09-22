@@ -8,6 +8,20 @@
 - [UberZAP logging](https://godoc.org/go.uber.org/zap) - Blazing fast, structured, leveled logging in Go.
 
 
+
+### P.S.: To run, you first need to run docker-compose (docker-compose up) and then create a table in db. The scheme for creating a table is inside the project, in the file "db.sql"
+```
+create table ad
+(
+    id              bigserial    not null primary key,
+    title           varchar(200) not null,
+    description     varchar(1000),
+    price           bigint       not null,
+    links_to_photos text[]       not null,
+    created_at      timestamp with time zone default now()
+);
+```
+
 ## API
 
 
